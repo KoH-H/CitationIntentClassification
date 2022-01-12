@@ -76,7 +76,7 @@ def json2pd(name):
     datadic = dict()
     for setname in name:
         data = dict()
-        with open('./dataset/acl/{}.jsonl'.format(setname), 'r+', encoding='utf8') as f:
+        with open('../dataset/acl/{}.jsonl'.format(setname), 'r+', encoding='utf8') as f:
             for line in jsonlines.Reader(f):
                 if 'citation_context' not in data:
                     data['citation_context'] = [line['text']]
@@ -91,12 +91,14 @@ def json2pd(name):
         data_df = pd.DataFrame(data)
         datadic[setname] = data_df
     return datadic
-def load_data(batch_size=None, data=None):
+
+
+def load_data(batch_size=None, dataname=None):
     assert batch_size is not None
     data = {}
     train, test, val = None, None, None
     path = Path('./') # root path
-    if data == 'ACT':
+    if dataname == 'ACT':
         train_set = pd.read_csv(path / 'dataset/act/SDP_train.csv', sep=',')
         test = pd.read_csv(path / 'dataset/act/SDP_test.csv', sep=',').merge(
             pd.read_csv(path / 'dataset/act/sample_submission.csv'), on='unique_id')
@@ -105,7 +107,7 @@ def load_data(batch_size=None, data=None):
         print(train['citation_class_label'].value_counts())
         print(collections.Counter(train['citation_class_label']).items())
         val = (train_set.loc[int(train_set.shape[0] * 0.2):]).reset_index(drop=True)
-    elif data == 'ACL':
+    elif dataname == 'ACL':
         acldf = json2pd(['train', 'dev', 'test'])
         train = acldf['train']
         val = acldf['dev']
