@@ -1,10 +1,11 @@
 import jsonlines
+import os
 import pandas as pd
 # train_data = dict()
-label_list = list()
-with open('dataset/acl/train.jsonl', 'r+', encoding='utf8') as f:
-    for line in jsonlines.Reader(f):
-        label_list.append(line['intent'])
+# label_list = list()
+# with open('dataset/acl/train.jsonl', 'r+', encoding='utf8') as f:
+#     for line in jsonlines.Reader(f):
+#         label_list.append(line['intent'])
         # print(line['intent'])
         # exit()
         # if 'citation_context' not in train_data:
@@ -23,4 +24,6 @@ with open('dataset/acl/train.jsonl', 'r+', encoding='utf8') as f:
 #
 # if a == 'acl':
 #     print(1234)
-print(label_list)
+# print(label_list)
+
+os.system("tar -zxvf dataset/acl/acl.tar.gz -C dataset/acl/")

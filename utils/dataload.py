@@ -7,6 +7,7 @@ import collections
 from pathlib import Path
 import re
 import jsonlines
+import os
 
 
 def reverse_sampler(train_data):
@@ -109,6 +110,7 @@ def load_data(batch_size=None, dataname=None):
         print(collections.Counter(train['citation_class_label']).items())
         val = (train_set.loc[int(train_set.shape[0] * 0.8):]).reset_index(drop=True)
     elif dataname == 'ACL':
+        os.system("tar -zxvf dataset/acl/acl.tar.gz -C dataset/acl/")
         acldf = json2pd(['train', 'dev', 'test'])
         train = acldf['train']
         val = acldf['dev']
