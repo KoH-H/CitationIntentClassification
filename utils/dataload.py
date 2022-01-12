@@ -73,7 +73,7 @@ def generate_batch_data(data, batch_size=16):
     return {'sen': sentences_list, 'tar': target_list}
 
 
-def json2pd(name):
+def acljson2pd(name):
     label_dict = {'Background': 0, 'Extends': 1, 'Uses': 2, 'Motivation': 3, 'CompareOrContrast': 4, 'Future': 5}
     datadic = dict()
     for setname in name:
@@ -95,6 +95,27 @@ def json2pd(name):
     return datadic
 
 
+def scijson2pd(name):
+    label_dict = {'background': 0, 'method': 1, 'result': 2}
+    datadic = dict()
+    for setname in name:
+        data = dict()
+        with open('./dataset/scicite/{}.jsonl'.format(setname), 'r+', encoding='utf8') as f:
+            for line in jsonlines.Reader(f):
+                if 'citation_context' not in data:
+                    data['citation_context'] = [line['string']]
+                    data['citation_class_label'] = [label_dict[line['label']]]
+                else:
+                    context_list = data['citation_context']
+                    context_list.append(line['string'])
+                    label_list = data['citation_class_label']
+                    label_list.append(label_dict[line['label']])
+                    data['citation_context'] = context_list
+                    data['citation_class_label'] = label_list
+        data_df = pd.DataFrame(data)
+        datadic[setname] = data_df
+    return datadic
+
 def load_data(batch_size=None, dataname=None):
     assert batch_size is not None
     data = {}
@@ -111,10 +132,15 @@ def load_data(batch_size=None, dataname=None):
         val = (train_set.loc[int(train_set.shape[0] * 0.8):]).reset_index(drop=True)
     elif dataname == 'ACL':
         os.system("tar -zxvf dataset/acl/acl.tar.gz -C dataset/acl/")
-        acldf = json2pd(['train', 'dev', 'test'])
+        acldf = acljson2pd(['train', 'dev', 'test'])
         train = acldf['train']
         val = acldf['dev']
         test = acldf['test']
+    else:
+        scidf = scijson2pd(['train', 'dev', 'test'])
+        train = scidf['train']
+        val = scidf['dev']
+        test = scidf['test']
     reverse_data = reverse_sampler(train)
     if dataname == 'ACT':
         reverse_data = delete_aug(reverse_data)
