@@ -18,7 +18,7 @@ def run_optuna(path, dev):
     token = AutoTokenizer.from_pretrained('allenai/scibert_scivocab_uncased')
     criterion = nn.CrossEntropyLoss()
     # dataset = load_data(16, reverse=True, multi=True, mul_num=2400)
-    dataset = load_data(16)
+    dataset = load_data(16, 'ACL')
 
     def objective(trial):
         model = Model('allenai/scibert_scivocab_uncased')
@@ -29,7 +29,7 @@ def run_optuna(path, dev):
         optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=2e-4)
         scheduler = WarmupMultiStepLR(optimizer, [90, 110], gamma=0.1, warmup_epochs=5)
         best_model_f1, best_epoch = dataset_train(model, token, dataset, criterion, optimizer, n_epoch, au_weight, dev,
-                                                    scheduler, model_path=path,beta=beta)
+                                                    scheduler, model_path=path)
 
         return best_model_f1
     study = optuna.create_study(study_name='studyname', direction='maximize', storage='sqlite:///optuna.db', load_if_exists=True)

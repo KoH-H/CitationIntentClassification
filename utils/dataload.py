@@ -73,6 +73,7 @@ def generate_batch_data(data, batch_size=16):
 
 
 def json2pd(name):
+    label_dict = {'Background': 0, 'Extends': 1, 'Uses': 2, 'Motivation': 3, 'CompareOrContrast': 4, 'Future': 5}
     datadic = dict()
     for setname in name:
         data = dict()
@@ -80,12 +81,12 @@ def json2pd(name):
             for line in jsonlines.Reader(f):
                 if 'citation_context' not in data:
                     data['citation_context'] = [line['text']]
-                    data['citation_class_label'] = [line['intent']]
+                    data['citation_class_label'] = [label_dict[line['intent']]]
                 else:
                     context_list = data['citation_context']
                     context_list.append(line['text'])
                     label_list = data['citation_class_label']
-                    label_list.append(line['intent'])
+                    label_list.append(label_dict[line['intent']])
                     data['citation_context'] = context_list
                     data['citation_class_label'] = label_list
         data_df = pd.DataFrame(data)
@@ -103,10 +104,10 @@ def load_data(batch_size=None, dataname=None):
         test = pd.read_csv(path / 'dataset/act/SDP_test.csv', sep=',').merge(
             pd.read_csv(path / 'dataset/act/sample_submission.csv'), on='unique_id')
         train_set = sklearn.utils.shuffle(train_set, random_state=0).reset_index(drop=True)
-        train = train_set.loc[:int(train_set.shape[0] * 0.2) - 1]
+        train = train_set.loc[:int(train_set.shape[0] * 0.8) - 1]
         print(train['citation_class_label'].value_counts())
         print(collections.Counter(train['citation_class_label']).items())
-        val = (train_set.loc[int(train_set.shape[0] * 0.2):]).reset_index(drop=True)
+        val = (train_set.loc[int(train_set.shape[0] * 0.8):]).reset_index(drop=True)
     elif dataname == 'ACL':
         acldf = json2pd(['train', 'dev', 'test'])
         train = acldf['train']
