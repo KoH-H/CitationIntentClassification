@@ -76,7 +76,7 @@ def json2pd(name):
     datadic = dict()
     for setname in name:
         data = dict()
-        with open('../dataset/acl/{}.jsonl'.format(setname), 'r+', encoding='utf8') as f:
+        with open('./dataset/acl/{}.jsonl'.format(setname), 'r+', encoding='utf8') as f:
             for line in jsonlines.Reader(f):
                 if 'citation_context' not in data:
                     data['citation_context'] = [line['text']]
@@ -113,11 +113,11 @@ def load_data(batch_size=None, dataname=None):
         val = acldf['dev']
         test = acldf['test']
     reverse_data = reverse_sampler(train)
-    if data == 'ACT':
+    if dataname == 'ACT':
         reverse_data = delete_aug(reverse_data)
     data['reverse'] = generate_batch_data(reverse_data, batch_size)
 
-    if data == 'ACT':
+    if dataname == 'ACT':
         train = delete_aug(train)
         val = delete_aug(val)
         test = delete_aug(test)
