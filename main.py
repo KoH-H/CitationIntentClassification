@@ -39,7 +39,7 @@ def run_optuna(path, dev):
     print(history)
 
 
-def main_run(path, dev):
+def main_run(path, dev, dataname):
     setup_seed(0)
     token = AutoTokenizer.from_pretrained('allenai/scibert_scivocab_uncased')
     model = Model('allenai/scibert_scivocab_uncased')
@@ -48,7 +48,7 @@ def main_run(path, dev):
     au_weight = 0.007413
     n_epoch = 151
     # dataset = load_data(16, reverse=True, multi=True, mul_num=2400)
-    dataset = load_data(16, 'ACL')
+    dataset = load_data(16, dataname)
 
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=2e-4)
     scheduler = WarmupMultiStepLR(optimizer, [90, 110], gamma=0.1, warmup_epochs=5)
@@ -66,7 +66,7 @@ def main_run(path, dev):
     print('Test'.center(20, '='))
     test_true = torch.Tensor(test_true_label).tolist()
     test_pre = torch.Tensor(test_pre_label).tolist()
-    generate_submission(test_pre, 'mul_rev_val_f1_{:.5}_best_epoch_{}'.format(best_model_f1, best_epoch), test_f1)
+    generate_submission(test_pre, 'mul_rev_val_f1_{:.5}_best_epoch_{}'.format(best_model_f1, best_epoch), test_f1, dataname)
     c_matrix = confusion_matrix(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
     per_eval = classification_report(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
     log_result(test_f1, best_model_f1,  c_matrix, per_eval, lr=lr, epoch=n_epoch, fun_name='main_multi_rev')
@@ -76,6 +76,6 @@ if __name__ == "__main__":
     tst = time.time()
     device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
     # run_optuna('citation_mul_rev_model.pth', device)
-    main_run('citation_mul_rev_model.pth', device)
+    main_run('citation_mul_rev_model.pth', device, 'ACL')
     ten = time.time()
     print('Total time: {}'.format((ten - tst)))
