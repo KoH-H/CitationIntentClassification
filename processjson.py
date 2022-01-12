@@ -27,5 +27,4 @@ import pandas as pd
 # print(label_list)
 print(123)
 print(456)
-print(789)
 os.system("tar -zxvf dataset/acl/acl.tar.gz -C dataset/acl/")
