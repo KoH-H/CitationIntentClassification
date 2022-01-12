@@ -6,6 +6,7 @@ from nltk.corpus import stopwords
 import collections
 from pathlib import Path
 import re
+import jsonlines
 
 
 def reverse_sampler(train_data):
@@ -71,34 +72,61 @@ def generate_batch_data(data, batch_size=16):
     return {'sen': sentences_list, 'tar': target_list}
 
 
-def load_data(batch_size=None):
+def json2pd(name):
+    datadic = dict()
+    for setname in name:
+        data = dict()
+        with open('./dataset/acl/{}.jsonl'.format(setname), 'r+', encoding='utf8') as f:
+            for line in jsonlines.Reader(f):
+                if 'citation_context' not in data:
+                    data['citation_context'] = [line['text']]
+                    data['citation_class_label'] = [line['intent']]
+                else:
+                    context_list = data['citation_context']
+                    context_list.append(line['text'])
+                    label_list = data['citation_class_label']
+                    label_list.append(line['intent'])
+                    data['citation_context'] = context_list
+                    data['citation_class_label'] = label_list
+        data_df = pd.DataFrame(data)
+        datadic[setname] = data_df
+    return datadic
+def load_data(batch_size=None, data=None):
     assert batch_size is not None
     data = {}
+    train, test, val = None, None, None
     path = Path('./') # root path
-    train_set = pd.read_csv(path / 'dataset/SDP_train.csv', sep=',')
-    test = pd.read_csv(path / 'dataset/SDP_test.csv', sep=',').merge(
-        pd.read_csv(path / 'dataset/sample_submission.csv'), on='unique_id')
-    train_set = sklearn.utils.shuffle(train_set, random_state=0).reset_index(drop=True)
-    train = train_set.loc[:int(train_set.shape[0] * 0.8) - 1]
-    print(train['citation_class_label'].value_counts())
-    print(collections.Counter(train['citation_class_label']).items())
-    val = (train_set.loc[int(train_set.shape[0] * 0.8):]).reset_index(drop=True)
-
+    if data == 'ACT':
+        train_set = pd.read_csv(path / 'dataset/act/SDP_train.csv', sep=',')
+        test = pd.read_csv(path / 'dataset/act/SDP_test.csv', sep=',').merge(
+            pd.read_csv(path / 'dataset/act/sample_submission.csv'), on='unique_id')
+        train_set = sklearn.utils.shuffle(train_set, random_state=0).reset_index(drop=True)
+        train = train_set.loc[:int(train_set.shape[0] * 0.2) - 1]
+        print(train['citation_class_label'].value_counts())
+        print(collections.Counter(train['citation_class_label']).items())
+        val = (train_set.loc[int(train_set.shape[0] * 0.2):]).reset_index(drop=True)
+    elif data == 'ACL':
+        acldf = json2pd(['train', 'dev', 'test'])
+        train = acldf['train']
+        val = acldf['dev']
+        test = acldf['test']
     reverse_data = reverse_sampler(train)
-    reverse_data = delete_aug(reverse_data)
+    if data == 'ACT':
+        reverse_data = delete_aug(reverse_data)
     data['reverse'] = generate_batch_data(reverse_data, batch_size)
+
+    if data == 'ACT':
+        train = delete_aug(train)
+        val = delete_aug(val)
+        test = delete_aug(test)
+    data['train'] = generate_batch_data(train, batch_size)
+    data['val'] = generate_batch_data(val, batch_size)
+    data['test'] = generate_batch_data(test, batch_size)
 
     mul_sec = pd.read_csv(path / 'dataset/section_name.csv')
     mul_num = train.shape[0]
     mul_section = mul_sec.head(mul_num)
-    mul_section_batch = generate_batch_data(mul_section, mul_section.shape[0] // (train.shape[0]//batch_size))
+    mul_section_batch = generate_batch_data(mul_section, mul_section.shape[0] // (train.shape[0] // batch_size))
     data['section'] = mul_section_batch
-
-    train = delete_aug(train)
-    val = delete_aug(val)
-    test = delete_aug(test)
-    data['train'] = generate_batch_data(train, batch_size)
-    data['val'] = generate_batch_data(val, batch_size)
-    data['test'] = generate_batch_data(test, batch_size)
 
     return data
