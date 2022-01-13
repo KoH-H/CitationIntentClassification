@@ -82,7 +82,7 @@ def main_run(path, dev, dataname):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    dataset = args.dataname
+    dataset = args.dataset
     tst = time.time()
     device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
     # run_optuna('citation_mul_rev_model.pth', device)
