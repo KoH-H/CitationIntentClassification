@@ -71,7 +71,7 @@ def main_run(path, dev, dataname):
     test_pre = torch.Tensor(test_pre_label).tolist()
     generate_submission(test_pre, 'mul_rev_val_f1_{:.5}_best_epoch_{}'.format(best_model_f1, best_epoch), test_f1, dataname)
     # labels = None
-    if dataname == 'SciCite':
+    if dataname == 'scicite':
         labels = [0, 1, 2]
     else:
         labels = [0, 1, 2, 3, 4, 5]
