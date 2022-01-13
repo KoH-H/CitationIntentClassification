@@ -26,8 +26,8 @@ import pandas as pd
 #     print(1234)
 # print(label_list)
 
-label = list()
-with open('dataset/scicite/train.jsonl', 'r+', encoding='utf8') as f:
-    for line in jsonlines.Reader(f):
-        label.append(line['label'])
-print(label)
+# label = list()
+# with open('dataset/scicite/train.jsonl', 'r+', encoding='utf8') as f:
+#     for line in jsonlines.Reader(f):
+#         label.append(line['label'])
+# print(label)
