@@ -13,7 +13,7 @@ import time
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("dataset", help="name of data", type=str)
+parser.add_argument("--dataset", help="name of data", type=str)
 
 def run_optuna(path, dev):
     print('Run optuna')
@@ -83,7 +83,6 @@ def main_run(path, dev, dataname):
 if __name__ == "__main__":
     args = parser.parse_args()
     dataset = args.dataname
-    
     tst = time.time()
     device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
     # run_optuna('citation_mul_rev_model.pth', device)
