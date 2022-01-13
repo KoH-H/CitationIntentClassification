@@ -1,6 +1,7 @@
 import jsonlines
 import os
 import pandas as pd
+import argparse
 # train_data = dict()
 # label_list = list()
 # with open('dataset/acl/train.jsonl', 'r+', encoding='utf8') as f:
@@ -31,3 +32,10 @@ import pandas as pd
 #     for line in jsonlines.Reader(f):
 #         label.append(line['label'])
 # print(label)
+
+parse = argparse.ArgumentParser()
+parse.add_argument("--dataset", help='name of data', type=str)
+parse.add_argument("--test-test", type=str)
+args = parse.parse_args()
+print(args.dataset)
+print(args.test_test)
