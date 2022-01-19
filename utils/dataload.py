@@ -1,8 +1,9 @@
-import sklearn
+import pandas as pd
+# import sklearn
 import random
-from utils.util import *
-import nltk
-from nltk.corpus import stopwords
+# from utils.util import *
+# import nltk
+# from nltk.corpus import stopwords
 import collections
 from pathlib import Path
 import re
@@ -95,24 +96,62 @@ def acljson2pd(name):
     return datadic
 
 
-def scijson2pd(name):
+# generate imbalanced data
+def scijson2pd(name: str, rate: list) -> dict:
     label_dict = {'background': 0, 'method': 1, 'result': 2}
     datadic = dict()
+    total_num = 0
     for setname in name:
-        data = dict()
+        background_data = dict()
+        method_data = dict()
+        re_data = dict()
         with open('./dataset/scicite/{}.jsonl'.format(setname), 'r+', encoding='utf8') as f:
             for line in jsonlines.Reader(f):
-                if 'citation_context' not in data:
-                    data['citation_context'] = [line['string']]
-                    data['citation_class_label'] = [label_dict[line['label']]]
+                if line['label'] == 'background':
+                    total_num = total_num + 1
+                    if 'citation_context' not in background_data:
+                        background_data['citation_context'] = [line['string']]
+                        background_data['citation_class_label'] = [label_dict[line['label']]]
+                    else:
+                        context_list = background_data['citation_context']
+                        context_list.append(line['string'])
+                        label_list = background_data['citation_class_label']
+                        label_list.append(label_dict[line['label']])
+                        background_data['citation_context'] = context_list
+                        background_data['citation_class_label'] = label_list
+                elif line['label'] == 'method':
+                    total_num = total_num + 1
+                    if 'citation_context' not in method_data:
+                        method_data['citation_context'] = [line['string']]
+                        method_data['citation_class_label'] = [label_dict[line['label']]]
+                    else:
+                        context_list = method_data['citation_context']
+                        context_list.append(line['string'])
+                        label_list = method_data['citation_class_label']
+                        label_list.append(label_dict[line['label']])
+                        method_data['citation_context'] = context_list
+                        method_data['citation_class_label'] = label_list
                 else:
-                    context_list = data['citation_context']
-                    context_list.append(line['string'])
-                    label_list = data['citation_class_label']
-                    label_list.append(label_dict[line['label']])
-                    data['citation_context'] = context_list
-                    data['citation_class_label'] = label_list
-        data_df = pd.DataFrame(data)
+                    total_num = total_num + 1
+                    if 'citation_context' not in re_data:
+                        re_data['citation_context'] = [line['string']]
+                        re_data['citation_class_label'] = [label_dict[line['label']]]
+                    else:
+                        context_list = re_data['citation_context']
+                        context_list.append(line['string'])
+                        label_list = re_data['citation_class_label']
+                        label_list.append(label_dict[line['label']])
+                        re_data['citation_context'] = context_list
+                        re_data['citation_class_label'] = label_list
+        backdata_df = pd.DataFrame(background_data)
+        medata_df = pd.DataFrame(method_data)
+        redata_df = pd.DataFrame(re_data)
+        base = total_num // (2 * (sum(rate)))
+        redata = redata_df[:base]
+        medata = medata_df[:(rate[1] * base)]
+        backdata = backdata_df[:(rate[0] * base)]
+        frames = [backdata, medata, redata]
+        data_df = pd.concat(frames).sample(frac=1).reset_index(drop=True)
         datadic[setname] = data_df
     return datadic
 
