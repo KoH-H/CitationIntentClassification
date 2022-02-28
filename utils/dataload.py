@@ -97,65 +97,65 @@ def acljson2pd(name):
 
 
 # generate imbalanced data
-def scijson2pd(name: str, rate: list) -> dict:
-    label_dict = {'background': 0, 'method': 1, 'result': 2}
-    datadic = dict()
-    total_num = 0
-    for setname in name:
-        background_data = dict()
-        method_data = dict()
-        re_data = dict()
-        with open('./dataset/scicite/{}.jsonl'.format(setname), 'r+', encoding='utf8') as f:
-            for line in jsonlines.Reader(f):
-                if line['label'] == 'background':
-                    total_num = total_num + 1
-                    if 'citation_context' not in background_data:
-                        background_data['citation_context'] = [line['string']]
-                        background_data['citation_class_label'] = [label_dict[line['label']]]
-                    else:
-                        context_list = background_data['citation_context']
-                        context_list.append(line['string'])
-                        label_list = background_data['citation_class_label']
-                        label_list.append(label_dict[line['label']])
-                        background_data['citation_context'] = context_list
-                        background_data['citation_class_label'] = label_list
-                elif line['label'] == 'method':
-                    total_num = total_num + 1
-                    if 'citation_context' not in method_data:
-                        method_data['citation_context'] = [line['string']]
-                        method_data['citation_class_label'] = [label_dict[line['label']]]
-                    else:
-                        context_list = method_data['citation_context']
-                        context_list.append(line['string'])
-                        label_list = method_data['citation_class_label']
-                        label_list.append(label_dict[line['label']])
-                        method_data['citation_context'] = context_list
-                        method_data['citation_class_label'] = label_list
-                else:
-                    total_num = total_num + 1
-                    if 'citation_context' not in re_data:
-                        re_data['citation_context'] = [line['string']]
-                        re_data['citation_class_label'] = [label_dict[line['label']]]
-                    else:
-                        context_list = re_data['citation_context']
-                        context_list.append(line['string'])
-                        label_list = re_data['citation_class_label']
-                        label_list.append(label_dict[line['label']])
-                        re_data['citation_context'] = context_list
-                        re_data['citation_class_label'] = label_list
-        backdata_df = pd.DataFrame(background_data)
-        medata_df = pd.DataFrame(method_data)
-        redata_df = pd.DataFrame(re_data)
-        base = total_num // (2 * (sum(rate)))
-        redata = redata_df[:base]
-        medata = medata_df[:(rate[1] * base)]
-        backdata = backdata_df[:(rate[0] * base)]
-        frames = [backdata, medata, redata]
-        data_df = pd.concat(frames).sample(frac=1).reset_index(drop=True)
-        datadic[setname] = data_df
-    return datadic
+# def scijson2pd(name: str, rate: list) -> dict:
+#     label_dict = {'background': 0, 'method': 1, 'result': 2}
+#     datadic = dict()
+#     total_num = 0
+#     for setname in name:
+#         background_data = dict()
+#         method_data = dict()
+#         re_data = dict()
+#         with open('./dataset/scicite/{}.jsonl'.format(setname), 'r+', encoding='utf8') as f:
+#             for line in jsonlines.Reader(f):
+#                 if line['label'] == 'background':
+#                     total_num = total_num + 1
+#                     if 'citation_context' not in background_data:
+#                         background_data['citation_context'] = [line['string']]
+#                         background_data['citation_class_label'] = [label_dict[line['label']]]
+#                     else:
+#                         context_list = background_data['citation_context']
+#                         context_list.append(line['string'])
+#                         label_list = background_data['citation_class_label']
+#                         label_list.append(label_dict[line['label']])
+#                         background_data['citation_context'] = context_list
+#                         background_data['citation_class_label'] = label_list
+#                 elif line['label'] == 'method':
+#                     total_num = total_num + 1
+#                     if 'citation_context' not in method_data:
+#                         method_data['citation_context'] = [line['string']]
+#                         method_data['citation_class_label'] = [label_dict[line['label']]]
+#                     else:
+#                         context_list = method_data['citation_context']
+#                         context_list.append(line['string'])
+#                         label_list = method_data['citation_class_label']
+#                         label_list.append(label_dict[line['label']])
+#                         method_data['citation_context'] = context_list
+#                         method_data['citation_class_label'] = label_list
+#                 else:
+#                     total_num = total_num + 1
+#                     if 'citation_context' not in re_data:
+#                         re_data['citation_context'] = [line['string']]
+#                         re_data['citation_class_label'] = [label_dict[line['label']]]
+#                     else:
+#                         context_list = re_data['citation_context']
+#                         context_list.append(line['string'])
+#                         label_list = re_data['citation_class_label']
+#                         label_list.append(label_dict[line['label']])
+#                         re_data['citation_context'] = context_list
+#                         re_data['citation_class_label'] = label_list
+#         backdata_df = pd.DataFrame(background_data)
+#         medata_df = pd.DataFrame(method_data)
+#         redata_df = pd.DataFrame(re_data)
+#         base = total_num // (2 * (sum(rate)))
+#         redata = redata_df[:base]
+#         medata = medata_df[:(rate[1] * base)]
+#         backdata = backdata_df[:(rate[0] * base)]
+#         frames = [backdata, medata, redata]
+#         data_df = pd.concat(frames).sample(frac=1).reset_index(drop=True)
+#         datadic[setname] = data_df
+#     return datadic
 
-def load_data(batch_size=None, dataname=None):
+def load_data(batch_size=None, dataname=None, radio=0.2):
     assert batch_size is not None
     data = {}
     train, test, val = None, None, None
@@ -165,15 +165,20 @@ def load_data(batch_size=None, dataname=None):
         test = pd.read_csv(path / 'dataset/act/SDP_test.csv', sep=',').merge(
             pd.read_csv(path / 'dataset/act/sample_submission.csv'), on='unique_id')
         train_set = sklearn.utils.shuffle(train_set, random_state=0).reset_index(drop=True)
-        train = train_set.loc[:int(train_set.shape[0] * 0.8) - 1]
+        train = train_set.loc[:int(train_set.shape[0] * radio) - 1]
         print(train['citation_class_label'].value_counts())
         print(collections.Counter(train['citation_class_label']).items())
-        val = (train_set.loc[int(train_set.shape[0] * 0.8):]).reset_index(drop=True)
+        val = (train_set.loc[int(train_set.shape[0] * radio):]).reset_index(drop=True)
     elif dataname == 'ACL':
         os.system("tar -zxvf dataset/acl/acl.tar.gz -C dataset/acl/")
         acldf = acljson2pd(['train', 'dev', 'test'])
-        train = acldf['train']
-        val = acldf['dev']
+        if radio == 0.2:
+
+            train = acldf['dev']
+            val = acldf['train']
+        else:
+            train = acldf['train']
+            val = acldf['dev']
         test = acldf['test']
     else:
         scidf = scijson2pd(['train', 'dev', 'test'])
