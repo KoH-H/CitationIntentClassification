@@ -1,9 +1,9 @@
 import pandas as pd
 # import sklearn
 import random
-# from utils.util import *
-# import nltk
-# from nltk.corpus import stopwords
+from utils.util import *
+import nltk
+from nltk.corpus import stopwords
 import collections
 from pathlib import Path
 import re

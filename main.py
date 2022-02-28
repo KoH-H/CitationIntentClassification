@@ -41,7 +41,7 @@ def run_optuna(params, path, dev):
 
         return best_model_f1
     study = optuna.create_study(study_name='studyname', direction='maximize', storage='sqlite:///optuna.db', load_if_exists=True)
-    study.optimize(objective, n_trials=6)
+    study.optimize(objective, n_trials=5)
     print("Best_Params:{} \t Best_Value:{}".format(study.best_params, study.best_value))
     history = study.trials_dataframe(attrs=('number', 'value', 'params', 'state'))
     print(history)
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     tst = time.time()
     if args.mode =='optuna':
-        run_optuna('citation_mul_rev_model.pth', device)
+        run_optuna(args, 'citation_mul_rev_model.pth', device)
     else:
         with open('params.json', 'r', encoding='utf-8') as f:
             config = json.load(f)
