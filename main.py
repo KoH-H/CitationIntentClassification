@@ -34,7 +34,6 @@ def run_optuna(params, path, dev):
         # n_epoch = trial.suggest_int('n_epoch', 140, 170, log=True)
         lr = trial.suggest_float('lr', 1e-4, 1e-3, log=True)
         auw = trial.suggest_float('au_weight', 0.001, 0.01, log=True)
-        beta = trial.suggest_float('beta', 0, 1, log=True)
         optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=2e-4)
         scheduler = WarmupMultiStepLR(optimizer, [90, 110], gamma=0.1, warmup_epochs=5)
         best_model_f1, best_epoch = dataset_train(model, token, dataset, criterion, optimizer, 151, auw, dev,
@@ -46,6 +45,10 @@ def run_optuna(params, path, dev):
     print("Best_Params:{} \t Best_Value:{}".format(study.best_params, study.best_value))
     history = study.trials_dataframe(attrs=('number', 'value', 'params', 'state'))
     print(history)
+
+    args.lr = float(format(study.best_params['lr'], '.6f'))
+    args.auw = float(format(study.best_params['auw'], '.6f'))
+    main_run(args, 'citation_mul_rev_model.pth', device)
 
 
 def main_run(params, path, dev):
