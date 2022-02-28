@@ -172,13 +172,13 @@ def load_data(batch_size=None, dataname=None, radio=0.2):
     elif dataname == 'ACL':
         os.system("tar -zxvf dataset/acl/acl.tar.gz -C dataset/acl/")
         acldf = acljson2pd(['train', 'dev', 'test'])
-        if radio == 0.2:
-
-            train = acldf['dev']
-            val = acldf['train']
-        else:
-            train = acldf['train']
-            val = acldf['dev']
+        # if radio == 0.2:
+        #
+        #     train = acldf['dev']
+        #     val = acldf['train']
+        # else:
+        train = acldf['train']
+        val = acldf['dev']
         test = acldf['test']
     else:
         scidf = scijson2pd(['train', 'dev', 'test'])

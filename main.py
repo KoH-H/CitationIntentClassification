@@ -27,13 +27,13 @@ def run_optuna(params, path, dev):
     setup_seed(0)
     token = AutoTokenizer.from_pretrained('allenai/scibert_scivocab_uncased')
     criterion = nn.CrossEntropyLoss()
-    dataset = load_data(16, params.dataname, radio=0.2)
+    dataset = load_data(16, params.dataname, radio=0.8)
 
     def objective(trial):
         model = Model('allenai/scibert_scivocab_uncased')
         # n_epoch = trial.suggest_int('n_epoch', 140, 170, log=True)
         lr = trial.suggest_float('lr', 1e-4, 1e-3, log=True)
-        auw = trial.suggest_float('au_weight', 0.001, 0.01, log=True)
+        auw = trial.suggest_float('auw', 0.001, 0.01, log=True)
         optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=2e-4)
         scheduler = WarmupMultiStepLR(optimizer, [90, 110], gamma=0.1, warmup_epochs=5)
         best_model_f1, best_epoch = dataset_train(model, token, dataset, criterion, optimizer, 151, auw, dev,
@@ -90,13 +90,12 @@ def main_run(params, path, dev):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    dataset = args.dataset
     tst = time.time()
     if args.mode =='optuna':
         run_optuna('citation_mul_rev_model.pth', device)
     else:
         with open('params.json', 'r', encoding='utf-8') as f:
-            config = json.read(f)
+            config = json.load(f)
         args.lr = config[args.dataname][args.tp]['lr']
         args.auw = config[args.dataname][args.tp]['auw']
         main_run(args, 'citation_mul_rev_model.pth', device)
