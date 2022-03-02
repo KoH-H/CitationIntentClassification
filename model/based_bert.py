@@ -209,7 +209,7 @@ class BertRev(nn.Module):
         select_index = list(range(sen['length'][0]))
         select_index.remove(0)  # 删除cls
         lhs = bert_output.last_hidden_state
-        res = bert_output.hidden_states[8]
+        # res = bert_output.hidden_states[8]
         relength = []
         recomposing = []
         mask_recomposing = []

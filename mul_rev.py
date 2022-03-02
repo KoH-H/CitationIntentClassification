@@ -111,9 +111,9 @@ def main_sci(path, dev):
 if __name__ == '__main__':
     device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
     args = parser.parse_args()
-    if args.cla == 'mul':
-        main_mul('mul_model.pth', device)
-    elif args.cla == 'rev':
-        main_rev('rev_model.pth', device)
-    else:
-        main_sci('scibert_model.pth', device)
+    # if args.cla == 'mul':
+    main_mul('mul_model.pth', device)
+    # elif args.cla == 'rev':
+    main_rev('rev_model.pth', device)
+    # else:
+    main_sci('scibert_model.pth', device)
