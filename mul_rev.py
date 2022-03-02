@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 from transformers import AutoTokenizer
-import sys
 import torch.optim as optim
-from model.based_bert import *
+from model.based_bert import BertBased
 from utils.util import *
 from sklearn.metrics import classification_report, confusion_matrix
 import argparse
-from lr_sch import WarmupMultiStepLR
-from datal_load import *
-from train_method import *
+from utils.scheduler import WarmupMultiStepLR
+from utils import *
+from train_valid.train_method import *
 from sklearn.metrics import classification_report
 from train_valid.dataset_valid import *
 start_time = time.time()
