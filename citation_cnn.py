@@ -16,6 +16,7 @@ from utils.util import *
 import collections
 import time
 from sklearn.metrics import confusion_matrix
+
 from torch.autograd import Variable
 from sklearn.manifold import TSNE
 from utils.utils import *
@@ -114,6 +115,7 @@ def main():
     test_pre = torch.Tensor(test_pre_label).tolist()
     test_true = torch.Tensor(test_y_label).tolist()
     c_matrxi = confusion_matrix(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
+    per_eval = classification_report(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
     print(c_matrxi)
     for i in range(len(test_true)):
         if test_true[i] == test_pre[i]:
@@ -122,7 +124,7 @@ def main():
             else:
                 count[test_true[i]] = count[test_true[i]] + 1
     print(count)
-
+    log_result(final_f1, 0, c_matrxi, per_eval, lr=lr, epoch=n_epoch, fun_name='textcnn')
 
 
 if __name__ == '__main__':

@@ -41,7 +41,7 @@ def main_rev(path, dev):
     data = load_data(batch_size=16, dataname='ACL', radio=0.8)
     best_model_f1 = rev_train(model, token, data, criterion, optimizer, 140, dev, model_path=path,
                               scheduler=scheduler)
-    test_f1, test_true_label, test_pre_label = dataset_valid(model, token,
+    test_f1, test_micro_f1, test_true_label, test_pre_label = dataset_valid(model, token,
                                                           data['test'], device,
                                                           mode='test', path=path)
     print('Test_True_Label:', collections.Counter(test_true_label))
@@ -67,7 +67,7 @@ def main_mul(path, dev):  # two task
     data = load_data(batch_size=16, dataname='ACL', radio=0.8)
     best_model_f1 = multi_train(model, token, data, criterion, optimizer, 80, dev, au_weight=0.007,
                                 model_path=path)
-    test_f1, test_true_label, test_pre_label = dataset_valid(model, token,
+    test_f1, test_micro_f1, test_true_label, test_pre_label = dataset_valid(model, token,
                                                           data['test'], device,
                                                           mode='test', path=path)
 
@@ -93,7 +93,7 @@ def main_sci(path, dev):
     data = load_data(batch_size=16, dataname='ACL', radio=0.8)
     best_model_f1 = sample_train(model, token, data, criterion, optimizer, 80, dev,
                                  model_path=path)
-    test_f1, test_true_label, test_pre_label = dataset_valid(model, token,
+    test_f1, test_micro_f1, test_true_label, test_pre_label = dataset_valid(model, token,
                                                              data['test'], device,
                                                              mode='test', path=path)
 
