@@ -99,7 +99,7 @@ def load_data(batch_size=None, dataname=None, radio=0.2):
     assert batch_size is not None
     data = {}
     train, test, val = None, None, None
-    path = Path('./') # root path
+    path = Path('/') # root path
     if dataname == 'ACT':
         train_set = pd.read_csv(path / 'dataset/act/SDP_train.csv', sep=',')
         test = pd.read_csv(path / 'dataset/act/SDP_test.csv', sep=',').merge(
