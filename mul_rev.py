@@ -79,7 +79,7 @@ def main_mul(path, dev):  # two task
     generate_submission(test_pre, 'mul_mul_val_f1_{:.5}'.format(best_model_f1), test_f1, 'ACL')
     c_matrix = confusion_matrix(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
     per_eval = classification_report(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
-    log_result(test_f1, best_model_f1,  c_matrix, per_eval, lr=lr, epoch=n_epoch, fun_name='mul')
+    log_result(test_f1, best_model_f1,  c_matrix, per_eval, lr=lr, epoch=n_epoch, fun_name='main_mul')
 
 
 
@@ -107,7 +107,7 @@ def main_sci(path, dev):
     generate_submission(test_pre, 'mul_mul_val_f1_{:.5}'.format(best_model_f1), test_f1, 'ACL')
     c_matrix = confusion_matrix(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
     per_eval = classification_report(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
-    log_result(test_f1, best_model_f1, c_matrix, per_eval, lr=lr, epoch=n_epoch, fun_name='mul')
+    log_result(test_f1, best_model_f1, c_matrix, per_eval, lr=lr, epoch=n_epoch, fun_name='main_sci')
 
 
 
