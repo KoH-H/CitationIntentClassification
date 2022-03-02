@@ -65,7 +65,7 @@ def main_mul(path, dev):  # two task
     n_epoch = 80
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=2e-4)
     data = load_data(batch_size=16, dataname='ACL', radio=0.8)
-    best_model_f1 = multi_train(model, token, data, criterion, optimizer, 80, dev, au_weight=0.007,
+    best_model_f1, best_epoch = multi_train(model, token, data, criterion, optimizer, 80, dev, au_weight=0.007,
                                 model_path=path)
     test_f1, test_micro_f1, test_true_label, test_pre_label = dataset_valid(model, token,
                                                           data['test'], device,
@@ -78,7 +78,9 @@ def main_mul(path, dev):  # two task
     test_pre = torch.Tensor(test_pre_label).tolist()
     generate_submission(test_pre, 'mul_mul_val_f1_{:.5}'.format(best_model_f1), test_f1, 'ACL')
     c_matrix = confusion_matrix(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
-    log_result(test_f1, best_model_f1, c_matrix, lr=lr, epoch=n_epoch, fun_name='main_mul')
+    per_eval = classification_report(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
+    log_result(test_f1, best_model_f1,  c_matrix, per_eval, lr=lr, epoch=n_epoch, fun_name='mul')
+
 
 
 def main_sci(path, dev):
@@ -104,7 +106,8 @@ def main_sci(path, dev):
     test_pre = torch.Tensor(test_pre_label).tolist()
     generate_submission(test_pre, 'mul_mul_val_f1_{:.5}'.format(best_model_f1), test_f1, 'ACL')
     c_matrix = confusion_matrix(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
-    log_result(test_f1, best_model_f1, c_matrix, lr=lr, epoch=n_epoch, fun_name='main_sci')
+    per_eval = classification_report(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
+    log_result(test_f1, best_model_f1, c_matrix, per_eval, lr=lr, epoch=n_epoch, fun_name='mul')
 
 
 
