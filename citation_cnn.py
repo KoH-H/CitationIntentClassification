@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import torch
-# from process_data import load_data
 import torch.utils.data as Data
 from model.model_lcn import LSTMCNN
 from model.model_c import CNN
@@ -9,18 +8,13 @@ import torch.optim as optim
 import torch.nn as nn
 from sklearn.metrics import f1_score
 import pandas as pd
-from sklearn.cluster import KMeans, MiniBatchKMeans
-# from process_data import *
 from utils.load_data import *
 from utils.util import *
 import collections
 import time
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, classification_report
 
-from torch.autograd import Variable
-from sklearn.manifold import TSNE
-from utils.utils import *
-from torch.distributions.beta import Beta
+# from utils.utils import *
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
 

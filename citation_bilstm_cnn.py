@@ -2,30 +2,20 @@ from pathlib import Path
 import torch
 # from process_data import load_data
 import torch.utils.data as Data
-from model.model_l import LSTM, LSTMMULTIEMB
 from model.model_lcn import LSTMCNN, RCNN
-from model.model_c import CNN
-from model.model_la import LSTMAttention
-from model.model_lac import BILSTMCNN
 import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+from utils.util import *
 from sklearn.metrics import f1_score
 import pandas as pd
 from sklearn.cluster import KMeans, MiniBatchKMeans
-# from process_data import *
-from load_data import *
+from utils.load_data import *
 import collections
 import time
-from sklearn.metrics import classification_report
-from torch.autograd import Variable
-from pgd_adversarial import PGD
-from sklearn.manifold import TSNE
-import matplotlib.pyplot as plt
-from utils.utils import *
-from torch.distributions.beta import Beta
-from lr_scheduler import WarmupMultiStepLR
+from sklearn.metrics import confusion_matrix, classification_report
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
 
@@ -37,8 +27,7 @@ def main():
     lr = 0.0001
     n_epoch = 200
     best_val_f1 = 0
-    s_train, s_val = load_train_val()
-    s_test = load_test_data()
+    s_train, s_val, s_test = load_train_val()
 
     # normal
     vocab_glove = load_word_vector(s_train, s_val, s_test)
@@ -53,24 +42,9 @@ def main():
     test_iter = Data.DataLoader(test_iter, batch_size=batch_size, shuffle=False)
     vocab_size = vocab_glove.vectors.size()
     print('Total num. of words: {}, word vector dimension: {}'.format(vocab_size[0], vocab_size[1]))
-    model_path = '/home/g19tka13/modelpth/rcnn_model.pth'
-    # LSTM
-    # model = LSTM(vocab_glove, hidden_size=hidden_size, num_layers=2, batch=batch_size,
-    #              bidirectional=True)
-
-    # CNN
-    # model = CNN(vocab, num_filters=128, filter_sizes=[2, 3, 4])
-
-    # LSTM+CNN
+    model_path = 'rcnn_model.pth'
     model = RCNN(vocab_glove, hidden_size=hidden_size, num_layers=2, bidirectional=True)
-    # model = BILSTMCNN(vocab, hidden_size=hidden_size, num_layers=2,  bidirectional=True,
-    #                   filter_sizes=[2, 3, 4, 5], out_channels=128)
-
-    # LSTM+Attention
-    # model = LSTMAttention(vocab, hidden_size=hidden_size, num_layers=2, batch=batch_size, bidirectional=True)
-    # model.embedding.weight.data = vocab.vectors
-    # model.embedding.weight.requires_grad = True
-    print(model)
+    # print(model)
     optimizer = optim.Adam(model.parameters(), lr=lr)
     model.to(device=device)
     ce_criterion = nn.CrossEntropyLoss(reduction='mean')
@@ -81,15 +55,8 @@ def main():
         for item in train_iter:
             word_id, sen_len, t_class_id = item[0].to(device), item[1].to(device), item[2]
             optimizer.zero_grad()
-            # LSTM
-            # out, word_matrix, label_matrix = model(label_to_id=label_to_id, word_id=word_id,
-            #                                        sen_len=sen_len, class_id=t_class_id)
-            # LSTM + CNN
-            # out, out_rcn = model(word_id=word_id, sen_len=sen_len, t_class_id=t_class_id)
-            # CNN
             l2c_out = model(word_id=word_id, sen_len=sen_len)
             loss = ce_criterion(l2c_out, t_class_id.long().to(device))
-            # loss = loss_BNN
             loss.backward()
             optimizer.step()
             avg_loss = loss.item()
@@ -134,21 +101,22 @@ def main():
     print('Test_y_label', sorted(collections.Counter(torch.Tensor(test_y_label).tolist()).items(), key=lambda x: x[0]))
     print('Test_pre_label', sorted(collections.Counter(torch.Tensor(test_pre_label).tolist()).items(), key=lambda x: x[0]))
     print('Test F1 : %.4f' % final_f1)
-    generate_submission(torch.Tensor(test_pre_label).tolist(), "rcnn", final_f1)
-    count = {}
+    # generate_submission(torch.Tensor(test_pre_label).tolist(), "rcnn", final_f1)
+    # count = {}
     test_pre = torch.Tensor(test_pre_label).tolist()
     test_true = torch.Tensor(test_y_label).tolist()
     c_matrxi = confusion_matrix(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
     per_eval = classification_report(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
     print(c_matrxi)
     print(per_eval)
-    for i in range(len(test_true)):
-        if test_true[i] == test_pre[i]:
-            if test_true[i] not in count.keys():
-                count[test_true[i]] = 1
-            else:
-                count[test_true[i]] = count[test_true[i]] + 1
-    print(count)
+    # for i in range(len(test_true)):
+    #     if test_true[i] == test_pre[i]:
+    #         if test_true[i] not in count.keys():
+    #             count[test_true[i]] = 1
+    #         else:
+    #             count[test_true[i]] = count[test_true[i]] + 1
+    # print(count)
+    log_result(final_f1, 0, c_matrxi, per_eval, lr=lr, epoch=n_epoch, fun_name='rcnn')
 
 
 if __name__ == '__main__':

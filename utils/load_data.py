@@ -268,8 +268,8 @@ def load_word_vector(train_data, val_data, test_data):
     label_dataframe = pd.Series(label)
     # Download word vector
     print('Loading word vectors')
-    path = os.path.join('../dataset/wordvector', 'glove.6B.zip')
-    unzip_path = Path('../dataset/wordvector')
+    path = os.path.join('./dataset/wordvector', 'glove.6B.zip')
+    unzip_path = Path('./dataset/wordvector')
     if not os.path.exists(path):
         print('Download word vectors')
         import urllib.request
@@ -277,14 +277,13 @@ def load_word_vector(train_data, val_data, test_data):
                                    path)
         with zipfile.ZipFile(path, 'r') as zipf:
             zipf.extractall(unzip_path)
-    vectors_glove = Vectors('glove.6B.300d.txt', cache='../dataset/wordvector')
+    vectors_glove = Vectors('glove.6B.300d.txt', cache='./dataset/wordvector')
     # vectors_fasttext = Vectors('wiki.en.vec', cache='/home/g19tka13/wordvector')
 
     vocab_glove = Vocab(collections.Counter(count_all_words(train_data['citation_context'].append
                                                       (val_data['citation_context'], ignore_index=True).append
                                                       (test_data['citation_context'], ignore_index=True).append
-                                                      (label_dataframe, ignore_index=True))),
-                        specials=['<pad>', '<unk>'], vectors=vectors_glove)
+                                                      (label_dataframe, ignore_index=True))), specials=['<pad>', '<unk>'], vectors=vectors_glove)
     return vocab_glove
 
 
