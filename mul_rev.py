@@ -38,7 +38,7 @@ def main_rev(path, dev):
     n_epoch = 140
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=2e-4)
     scheduler = WarmupMultiStepLR(optimizer, [90, 110], gamma=0.01, warmup_epochs=5)
-    data = load_data(batch_size=16, dataname='ACT', radio=0.8)
+    data = load_data(batch_size=16, dataname='ACL', radio=0.8)
     best_model_f1 = rev_train(model, token, data, criterion, optimizer, 140, dev, model_path=path,
                               scheduler=scheduler)
     test_f1, test_true_label, test_pre_label = dataset_valid(model, token,
@@ -49,7 +49,7 @@ def main_rev(path, dev):
     print('Test F1: %.4f Best Val F1: %.4f' % (test_f1, best_model_f1))
     test_true = torch.Tensor(test_true_label).tolist()
     test_pre = torch.Tensor(test_pre_label).tolist()
-    generate_submission(test_pre, 'mul_rev_val_f1_{:.5}'.format(best_model_f1), test_f1, 'ACT')
+    generate_submission(test_pre, 'mul_rev_val_f1_{:.5}'.format(best_model_f1), test_f1, 'ACL')
     c_matrix = confusion_matrix(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
     per_eval = classification_report(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
     log_result(test_f1, best_model_f1, c_matrix, per_eval, lr=lr, epoch=n_epoch, fun_name='main_rev')
@@ -64,7 +64,7 @@ def main_mul(path, dev):  # two task
     lr = 0.0005
     n_epoch = 80
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=2e-4)
-    data = load_data(batch_size=16, dataname='ACT', radio=0.8)
+    data = load_data(batch_size=16, dataname='ACL', radio=0.8)
     best_model_f1 = multi_train(model, token, data, criterion, optimizer, 80, dev, au_weight=0.007,
                                 model_path=path)
     test_f1, test_true_label, test_pre_label = dataset_valid(model, token,
@@ -76,13 +76,13 @@ def main_mul(path, dev):  # two task
     print('Test F1: %.4f Best Val F1: %.4f' % (test_f1, best_model_f1))
     test_true = torch.Tensor(test_true_label).tolist()
     test_pre = torch.Tensor(test_pre_label).tolist()
-    generate_submission(test_pre, 'mul_mul_val_f1_{:.5}'.format(best_model_f1), test_f1, 'ACT')
+    generate_submission(test_pre, 'mul_mul_val_f1_{:.5}'.format(best_model_f1), test_f1, 'ACL')
     c_matrix = confusion_matrix(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
     log_result(test_f1, best_model_f1, c_matrix, lr=lr, epoch=n_epoch, fun_name='main_mul')
 
 
 def main_sci(path, dev):
-    print('Run main_mul')
+    print('Run main_sci')
     setup_seed(0)
     token = AutoTokenizer.from_pretrained('allenai/scibert_scivocab_uncased')
     model = BertBased('allenai/scibert_scivocab_uncased')
@@ -90,7 +90,7 @@ def main_sci(path, dev):
     lr = 0.0005
     n_epoch = 80
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=2e-4)
-    data = load_data(batch_size=16, dataname='ACT', radio=0.8)
+    data = load_data(batch_size=16, dataname='ACL', radio=0.8)
     best_model_f1 = sample_train(model, token, data, criterion, optimizer, 80, dev,
                                  model_path=path)
     test_f1, test_true_label, test_pre_label = dataset_valid(model, token,
@@ -102,7 +102,7 @@ def main_sci(path, dev):
     print('Test F1: %.4f Best Val F1: %.4f' % (test_f1, best_model_f1))
     test_true = torch.Tensor(test_true_label).tolist()
     test_pre = torch.Tensor(test_pre_label).tolist()
-    generate_submission(test_pre, 'mul_mul_val_f1_{:.5}'.format(best_model_f1), test_f1, 'ACT')
+    generate_submission(test_pre, 'mul_mul_val_f1_{:.5}'.format(best_model_f1), test_f1, 'ACL')
     c_matrix = confusion_matrix(test_true, test_pre, labels=[0, 1, 2, 3, 4, 5])
     log_result(test_f1, best_model_f1, c_matrix, lr=lr, epoch=n_epoch, fun_name='main_mul')
 

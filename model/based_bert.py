@@ -5,7 +5,6 @@ from transformers import AutoModel
 import numpy as np
 import torch.nn.utils.rnn as rnn_utils
 import torch.nn.functional as F
-from loss.mmd_loss import MMD_loss
 import collections
 
 
