@@ -2,6 +2,7 @@
 # from utils.util import *
 from train_valid.dataset_valid import *
 import random
+import time
 import copy
 import collections
 import torch.nn.functional as F
@@ -14,8 +15,8 @@ from sklearn.cluster import KMeans
 def sample_train(model, token, data, criterion, optimize, n_epoch, device, model_path=None):
     model.to(device=device)
     best_model_f1, counts, tmp,  = 0, 0, 0
-    train_sen = data['train1']['sen']
-    train_tar = data['train1']['tar']
+    train_sen = data['train']['sen']
+    train_tar = data['train']['tar']
     for i in range(n_epoch):
         model.train()
         avg_loss = 0
