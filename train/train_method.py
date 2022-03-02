@@ -145,7 +145,7 @@ def rev_train(model, token, data, criterion, optimize, n_epoch, device, model_pa
                 avg_loss = 0
         ted = time.time()
         print("Train time used:", ted - tst, i)
-        # val_f1 = trans_vail(model, token, data['val'], device)
+        # val_f1 = trans_vail(modelacl, token, data['val'], device)
         val_f1, val_micro_f1 = dataset_valid(model, token, data['val'], device, criterion=criterion)
         print('Epoch: %d, F1: %.4f' % (i, val_f1))
         if val_f1 > best_model_f1:

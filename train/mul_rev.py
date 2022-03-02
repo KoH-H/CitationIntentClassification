@@ -2,7 +2,7 @@
 from transformers import AutoTokenizer
 import sys
 import torch.optim as optim
-from based_bert import *
+from model.based_bert import *
 from utils.util import *
 from sklearn.metrics import classification_report, confusion_matrix
 import argparse
