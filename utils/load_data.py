@@ -25,6 +25,27 @@ stop_words = stop_words + label
 class_num = 6
 
 
+def acljson2pd(name):
+    label_dict = {'Background': 0, 'Extends': 1, 'Uses': 2, 'Motivation': 3, 'CompareOrContrast': 4, 'Future': 5}
+    datadic = dict()
+    for setname in name:
+        data = dict()
+        with open('./dataset/acl/{}.jsonl'.format(setname), 'r+', encoding='utf8') as f:
+            for line in jsonlines.Reader(f):
+                if 'citation_context' not in data:
+                    data['citation_context'] = [line['text']]
+                    data['citation_class_label'] = [label_dict[line['intent']]]
+                else:
+                    context_list = data['citation_context']
+                    context_list.append(line['text'])
+                    label_list = data['citation_class_label']
+                    label_list.append(label_dict[line['intent']])
+                    data['citation_context'] = context_list
+                    data['citation_class_label'] = label_list
+        data_df = pd.DataFrame(data)
+        datadic[setname] = data_df
+    return datadic
+
 def load_train_val():
     """
     load train_me val data
@@ -34,266 +55,199 @@ def load_train_val():
     print('Loading train_me data')
     # taskA_train_data = data_path / 'train_translate_balanced.csv'
     # taskA_train_data = data_path / 'train_translate.csv'
-    taskA_train_data = data_path / 'SDP_train.csv'
-    df = pd.read_csv(taskA_train_data, sep=',')
-    class_num = df['citation_class_label'].value_counts()
-    print('class_num \n', class_num)
-    # df = df.sample(frac=1).reset_index(drop=True)
-    # df = df[(df['citation_class_label'] == 3) | (df['citation_class_label'] == 0)]
-    df = sklearn.utils.shuffle(df, random_state=0).reset_index(drop=True)  # random seed
-    print(df)
-    # df = df.head(300)
-    total_instance_num = float(df.shape[0])
-    print(df.shape)
-    df_header = df.columns
-    train_data = pd.DataFrame(columns=['citation_context', 'citation_class_label'])
-    reverse_train_data = pd.DataFrame(columns=['citation_context', 'citation_class_label'])
-    class_num = collections.Counter(df['citation_class_label'])  # Counter.items  Counter 结果未进行排序
-    class_id_sort = sorted(list(class_num.keys()))
-    # weighted = np.zeros(6, dtype=np.float32)
-    # for i in class_id_sort:
-    #     weighted[i] = np.log10((total_instance_num - class_num[i])/total_instance_num) + 1
+    os.system("tar -zxvf dataset/acl/acl.tar.gz -C dataset/acl/")
+    acldf = acljson2pd(['train', 'dev', 'test'])
+    train = acldf['train']
+    val = acldf['dev']
+    test = acldf['test']
+    # taskA_train_data =  'dataset/acl/SDP_train.csv'
+    # df = pd.read_csv(taskA_train_data, sep=',')
     # class_num = df['citation_class_label'].value_counts()
     # print('class_num \n', class_num)
-    # weighted = np.zeros(6, dtype=np.float32)
-    # 保留小数位数 使用%.2f，round函数或者float函数。假设要保留两位小数
-    # round(num, 2) || '%.2f' % num || float('%.2f' % num)
-    # for i in range(6):
-    #     weighted[i] = np.log10((total_instance_num - class_num[i]) / class_num[i])
-    for index, row in df.iterrows():
-        cited_author = row['cited_author']
-        citation_text = re.sub(r"#AUTHOR_TAG", cited_author, row['citation_context'])
-        # citation_text = re.sub(r'[\[0-9\]]', '', citation_text).lower()
-        # citation_text = re.sub(r' \(.*?\)',  '', citation_text)
-        citation_text = re.sub(r'[^a-zA-Z]', ' ', citation_text).lower()  # 删除无用的数据如何数字 标点符号之类
-        # citation_text = re.sub(r'[0-9]|[\[0-9\]]', '', citation_text).lower()
-        citation_text = nltk.word_tokenize(citation_text)
-        citation_text = [word for word in citation_text if (word not in stop_words and len(word) > 1)]
-        # citation_word = []
-        # ner_list = []
-        # for word in citation_text:
-        #     if word not in stop_words and len(word) > 1:
-        #         if word == 'authortag':
-        #             citation_word.append(row['cited_author'].lower())
-        #             ner_list.append(1)
-        #             continue
-        #         citation_word.append(word)
-        #         ner_list.append(0)
-        # ner.append(ner_list)
-        # train_data.loc[index] = {"unique_id": row['unique_id'],
-        #                          'core_id': row['core_id'],
-        #                          'citing_title': row['citing_title'],
-        #                          'citing_author': row['citing_author'],
-        #                          'cited_title': row['cited_title'],
-        #                          'cited_author': row['cited_author'],
-        #                          'citation_context': citation_text,
-        #                          'citation_class_label': row['citation_class_label']}
-        # train_length_list.append(len(citation_text))
-        # if len(citation_text) > 50:
-        #     citation_text = citation_text[:50]
-        # if len(citation_text) < 5:
-        #     train_data.loc[index] = {"citation_context": np.nan,
-        #                              "citation_class_label": row['citation_class_label']}
-        #     continue
-        # if len(citation_text) > 50:
-        #     citation_text = citation_text[:50]
-        train_data.loc[index] = {"citation_context": citation_text,
-                                 "citation_class_label": row['citation_class_label']}
-        # if index < int(df.shape[0] * 0.8):
-        #     citation_text.reverse()
-        #     reverse_train_data.loc[index] = {"citation_context": citation_text,
-        #                                      "citation_class_label": row['citation_class_label']}
-        # print(citation_text)
-    train_data = train_data.dropna(axis=0, how='any').reset_index(drop=True)
-    train = train_data.loc[:int(train_data.shape[0] * 0.8) - 1]
-    val = (train_data.loc[int(train_data.shape[0] * 0.8):]).reset_index(drop=True)
-    # train_me = train_me.append(reverse_train_data, ignore_index=True)
-    print(10 * '=', "real_train", 10 * '=')
-    print(train['citation_class_label'].value_counts())
-    print(10 * '=', "real_train", 10 * '=')
-    # display sentences length and num
-    # ctrain = collections.Counter(train_length_list)
-    # length_sort = sorted(list(ctrain.keys()))
-    # print('train_length', length_sort)
-    # num_list = []
-    # for i in length_sort:
-    #     num_list.append(ctrain[i])
-    # print(num_list)
-    # print(ctrain)
-    # plt.figure(figsize=(30, 6), dpi=100)
-    # mpl.rcParams['font.family'] = 'SimHei'
-    # length_sort = [str(length) for length in length_sort]
-    # plt.bar(length_sort, num_list, width=0.5, color='red')
-    # plt.grid(alpha=0.3, linestyle=':')
-    # plt.xlabel('sentences length')
-    # plt.ylabel('sentences num')
-    # plt.show()
-    return train, val
+    # df = sklearn.utils.shuffle(df, random_state=0).reset_index(drop=True)  # random seed
+    # train_data = pd.DataFrame(columns=['citation_context', 'citation_class_label'])
+    # for index, row in df.iterrows():
+    #     cited_author = row['cited_author']
+    #     citation_text = re.sub(r"#AUTHOR_TAG", cited_author, row['citation_context'])
+    #     citation_text = re.sub(r'[^a-zA-Z]', ' ', citation_text).lower()  # 删除无用的数据如何数字 标点符号之类
+    #     citation_text = nltk.word_tokenize(citation_text)
+    #     citation_text = [word for word in citation_text if (word not in stop_words and len(word) > 1)]
+    #     train_data.loc[index] = {"citation_context": citation_text,
+    #                              "citation_class_label": row['citation_class_label']}
+    #
+    # train_data = train_data.dropna(axis=0, how='any').reset_index(drop=True)
+    # train = train_data.loc[:int(train_data.shape[0] * 0.8) - 1]
+    # val = (train_data.loc[int(train_data.shape[0] * 0.8):]).reset_index(drop=True)
+    # # train_me = train_me.append(reverse_train_data, ignore_index=True)
+    # print(10 * '=', "real_train", 10 * '=')
+    # print(train['citation_class_label'].value_counts())
+    # print(10 * '=', "real_train", 10 * '=')
+    return train, val, test
 
 
-def reverse_sampler(traindata):
-    random.seed(0)
-    counter_train = dict(traindata['citation_class_label'].value_counts())
-    num_list = list(counter_train.values())
-    class_list = list(counter_train.keys())
-    max_num = max(num_list)
-    class_weight = [max_num / i for i in num_list]
-    sum_weight = sum(class_weight)
-    class_dict = dict()
-    # print(traindata[traindata['citation_class_label'] == 0].index.values.tolist())
-    sampled_examples = []
-    for i in class_list:
-        class_dict[i] = traindata[traindata['citation_class_label'] == i].index.values.tolist()
-    total_samples = sum(num_list)
-    for _ in range(total_samples):
-        rand_number, now_sum = random.random() * sum_weight, 0
-        for j in class_list:
-            now_sum += class_weight[class_list.index(j)]
-            if rand_number <= now_sum:
-                sampled_examples.append(random.choice(class_dict[j]))
-                break
-    print('reverse sample count{}'.format(collections.Counter(traindata.iloc[sampled_examples, :]['citation_class_label'])))
-    # print(collections.Counter(sampled_examples))
-    revere_data = traindata.iloc[sampled_examples, :].reset_index(drop=True)   # 不reset_index的话因为重复采样会出现多个相同的索引
-    revere_data.loc[:, 'change'] = 0
-    return revere_data
+# def reverse_sampler(traindata):
+#     random.seed(0)
+#     counter_train = dict(traindata['citation_class_label'].value_counts())
+#     num_list = list(counter_train.values())
+#     class_list = list(counter_train.keys())
+#     max_num = max(num_list)
+#     class_weight = [max_num / i for i in num_list]
+#     sum_weight = sum(class_weight)
+#     class_dict = dict()
+#     # print(traindata[traindata['citation_class_label'] == 0].index.values.tolist())
+#     sampled_examples = []
+#     for i in class_list:
+#         class_dict[i] = traindata[traindata['citation_class_label'] == i].index.values.tolist()
+#     total_samples = sum(num_list)
+#     for _ in range(total_samples):
+#         rand_number, now_sum = random.random() * sum_weight, 0
+#         for j in class_list:
+#             now_sum += class_weight[class_list.index(j)]
+#             if rand_number <= now_sum:
+#                 sampled_examples.append(random.choice(class_dict[j]))
+#                 break
+#     print('reverse sample count{}'.format(collections.Counter(traindata.iloc[sampled_examples, :]['citation_class_label'])))
+#     # print(collections.Counter(sampled_examples))
+#     revere_data = traindata.iloc[sampled_examples, :].reset_index(drop=True)   # 不reset_index的话因为重复采样会出现多个相同的索引
+#     revere_data.loc[:, 'change'] = 0
+#     return revere_data
 
 
-def load_test_data():
-    """
-    :return:
-    """
-    print('Loading test data')
-    taskA_test_data = data_path / 'SDP_test.csv'
-    test_df = pd.read_csv(taskA_test_data, sep=',').merge(pd.read_csv(str(taskA_test_data).replace
-                                                                      ('SDP_test', 'sample_submission')), on='unique_id')
-    # test_df = test_df.sample(frac=1).reset_index(drop=True)
-    # test_df = test_df.head(500)
-    print(test_df.shape)
-    test_df_header = test_df.columns
-    test_data = pd.DataFrame(columns=['citation_context', 'citation_class_label'])
-    for index, row in test_df.iterrows():
-        label_word = str(label[row['citation_class_label']])
-        cited_author = row['cited_author']
-        citation_text = re.sub(r"#AUTHOR_TAG", cited_author, row['citation_context'])
-        # citation_text = re.sub(r'[\[0-9\]]', '', citation_text).lower()
-        # citation_text = re.sub(r' \(.*?\)', '', citation_text)
-        citation_text = re.sub(r'[^a-zA-Z]', ' ', citation_text).lower()
-        # citation_text = re.sub(r'[0-9]|[\[0-9\]]', '', citation_text).lower()
-        citation_text = nltk.word_tokenize(citation_text)
-        citation_text = [word for word in citation_text if (word not in stop_words and len(word) > 1)]
-        # test_data.loc[index] = {"unique_id": row['unique_id'],
-        #                         'core_id': row['core_id'],
-        #                         'citing_title': row['citing_title'],
-        #                         'citing_author': row['citing_author'],
-        #                         'cited_title': row['cited_title'],
-        #                         'cited_author': row['cited_author'],
-        #                         'citation_context': citation_text,
-        #                         'citation_class_label': row['citation_class_label']}
-        # test_length_list.append(len(citation_text))
-        # if len(citation_text) > 50:
-        #     citation_text = citation_text[:50]
-        # if len(citation_text) < 5:
-        #     test_data.loc[index] = {'citation_context': np.nan,
-        #                             'citation_class_label': row['citation_class_label']}
-        #     continue
-        # if len(citation_text) > 50:
-        #     citation_text = citation_text[: 50]
-        test_data.loc[index] = {'citation_context': citation_text,
-                                'citation_class_label': row['citation_class_label']}
-    # display sentences length and num
-    # print('test_length', collections.Counter(test_length_list))
-    # citation_counter = collections.Counter(test_length_list)
-    # length_list = sorted(list(citation_counter.keys()))
-    # num_list = []
-    # for i in length_list:
-    #     num_list.append(citation_counter[i])
-    # length_list = [str(length) for length in length_list]
-    # plt.figure(figsize=(30, 6), dpi=100)
-    # mpl.rcParams['font.family'] = 'SimHei'
-    # # length_sort = [str(length) for length in length_sort]
-    # plt.bar(length_list, num_list, width=0.5, color='red')
-    # plt.grid(alpha=0.3, linestyle=':')
-    # plt.xlabel('test sentences length')
-    # plt.ylabel('test sentences num')
-    # plt.show()
-    test_data = test_data.dropna(axis=0, how='any').reset_index(drop=True)
-    return test_data
+# def load_test_data():
+#     """
+#     :return:
+#     """
+#     print('Loading test data')
+#     taskA_test_data = data_path / 'SDP_test.csv'
+#     test_df = pd.read_csv(taskA_test_data, sep=',').merge(pd.read_csv(str(taskA_test_data).replace
+#                                                                       ('SDP_test', 'sample_submission')), on='unique_id')
+#     # test_df = test_df.sample(frac=1).reset_index(drop=True)
+#     # test_df = test_df.head(500)
+#     print(test_df.shape)
+#     test_df_header = test_df.columns
+#     test_data = pd.DataFrame(columns=['citation_context', 'citation_class_label'])
+#     for index, row in test_df.iterrows():
+#         label_word = str(label[row['citation_class_label']])
+#         cited_author = row['cited_author']
+#         citation_text = re.sub(r"#AUTHOR_TAG", cited_author, row['citation_context'])
+#         # citation_text = re.sub(r'[\[0-9\]]', '', citation_text).lower()
+#         # citation_text = re.sub(r' \(.*?\)', '', citation_text)
+#         citation_text = re.sub(r'[^a-zA-Z]', ' ', citation_text).lower()
+#         # citation_text = re.sub(r'[0-9]|[\[0-9\]]', '', citation_text).lower()
+#         citation_text = nltk.word_tokenize(citation_text)
+#         citation_text = [word for word in citation_text if (word not in stop_words and len(word) > 1)]
+#         # test_data.loc[index] = {"unique_id": row['unique_id'],
+#         #                         'core_id': row['core_id'],
+#         #                         'citing_title': row['citing_title'],
+#         #                         'citing_author': row['citing_author'],
+#         #                         'cited_title': row['cited_title'],
+#         #                         'cited_author': row['cited_author'],
+#         #                         'citation_context': citation_text,
+#         #                         'citation_class_label': row['citation_class_label']}
+#         # test_length_list.append(len(citation_text))
+#         # if len(citation_text) > 50:
+#         #     citation_text = citation_text[:50]
+#         # if len(citation_text) < 5:
+#         #     test_data.loc[index] = {'citation_context': np.nan,
+#         #                             'citation_class_label': row['citation_class_label']}
+#         #     continue
+#         # if len(citation_text) > 50:
+#         #     citation_text = citation_text[: 50]
+#         test_data.loc[index] = {'citation_context': citation_text,
+#                                 'citation_class_label': row['citation_class_label']}
+#     # display sentences length and num
+#     # print('test_length', collections.Counter(test_length_list))
+#     # citation_counter = collections.Counter(test_length_list)
+#     # length_list = sorted(list(citation_counter.keys()))
+#     # num_list = []
+#     # for i in length_list:
+#     #     num_list.append(citation_counter[i])
+#     # length_list = [str(length) for length in length_list]
+#     # plt.figure(figsize=(30, 6), dpi=100)
+#     # mpl.rcParams['font.family'] = 'SimHei'
+#     # # length_sort = [str(length) for length in length_sort]
+#     # plt.bar(length_list, num_list, width=0.5, color='red')
+#     # plt.grid(alpha=0.3, linestyle=':')
+#     # plt.xlabel('test sentences length')
+#     # plt.ylabel('test sentences num')
+#     # plt.show()
+#     test_data = test_data.dropna(axis=0, how='any').reset_index(drop=True)
+#     return test_data
 
 
-def load_balanced_data():
-    """
-    :return:
-    """
-    print('Loading balanced data')
-    taskA_balanced_data = data_path / 'data_balanced.csv'
-    balanced_df = pd.read_csv(taskA_balanced_data, sep=',')
-    balanced_df = balanced_df.sample(frac=1).reset_index(drop=True)
-    # test_df = test_df.head(500)
-    print(balanced_df.shape)
-    test_df_header = balanced_df.columns
-    balanced_data = pd.DataFrame(columns=['citation_context', 'citation_class_label'])
-    for index, row in balanced_df.iterrows():
-        label_word = str(label[row['citation_class_label']])
-        cited_author = row['cited_author']
-        citation_text = re.sub(r"#AUTHOR_TAG", cited_author, row['citation_context'])
-        # citation_text = re.sub(r'[\[0-9\]]', '', citation_text).lower()
-        # citation_text = re.sub(r' \(.*?\)', '', citation_text)
-        citation_text = re.sub(r'[^a-zA-Z]', ' ', citation_text).lower()
-        # citation_text = re.sub(r'[0-9]|[\[0-9\]]', '', citation_text).lower()
-        citation_text = nltk.word_tokenize(citation_text)
-        citation_text = [word for word in citation_text if (word not in stop_words and len(word) > 1)]
-        # test_data.loc[index] = {"unique_id": row['unique_id'],
-        #                         'core_id': row['core_id'],
-        #                         'citing_title': row['citing_title'],
-        #                         'citing_author': row['citing_author'],
-        #                         'cited_title': row['cited_title'],
-        #                         'cited_author': row['cited_author'],
-        #                         'citation_context': citation_text,
-        #                         'citation_class_label': row['citation_class_label']}
-        # test_length_list.append(len(citation_text))
-        # if len(citation_text) > 50:
-        #     citation_text = citation_text[:50]
-        # if len(citation_text) < 5:
-        #     test_data.loc[index] = {'citation_context': np.nan,
-        #                             'citation_class_label': row['citation_class_label']}
-        #     continue
-        balanced_data.loc[index] = {'citation_context': citation_text,
-                                    'citation_class_label': row['citation_class_label']}
-    # display sentences length and num
-    # print('test_length', collections.Counter(test_length_list))
-    # citation_counter = collections.Counter(test_length_list)
-    # length_list = sorted(list(citation_counter.keys()))
-    # num_list = []
-    # for i in length_list:
-    #     num_list.append(citation_counter[i])
-    # length_list = [str(length) for length in length_list]
-    # plt.figure(figsize=(30, 6), dpi=100)
-    # mpl.rcParams['font.family'] = 'SimHei'
-    # # length_sort = [str(length) for length in length_sort]
-    # plt.bar(length_list, num_list, width=0.5, color='red')
-    # plt.grid(alpha=0.3, linestyle=':')
-    # plt.xlabel('test sentences length')
-    # plt.ylabel('test sentences num')
-    # plt.show()
-    balanced_data = balanced_data.dropna(axis=0, how='any').reset_index(drop=True)
-    return balanced_data
-
-
-def load_unlabeled_data():
-    print('Loading Unlabeled data')
-    unlabeled_path = data_path / 'aclgenerate.csv'
-    data = pd.read_csv(unlabeled_path, sep=',')
-    # print(data.head(3000))
-    used_data = data.head(3000)
-    unlabeled_data = pd.DataFrame(columns=['citation_context', 'citation_class_label'])
-    for index, row in used_data.iterrows():
-        citation_context = re.sub(r'[^a-zA-Z]', ' ', row['citation_context']).lower()
-        citation_text = nltk.word_tokenize(citation_context)
-        citation_text = [word for word in citation_text if (word not in stop_words and len(word) > 1)]
-        unlabeled_data.loc[index] = {'citation_context': citation_text, 'citation_class_label': 0}
-    # print(unlabeled_data)
-    return unlabeled_data
+# def load_balanced_data():
+#     """
+#     :return:
+#     """
+#     print('Loading balanced data')
+#     taskA_balanced_data = data_path / 'data_balanced.csv'
+#     balanced_df = pd.read_csv(taskA_balanced_data, sep=',')
+#     balanced_df = balanced_df.sample(frac=1).reset_index(drop=True)
+#     # test_df = test_df.head(500)
+#     print(balanced_df.shape)
+#     test_df_header = balanced_df.columns
+#     balanced_data = pd.DataFrame(columns=['citation_context', 'citation_class_label'])
+#     for index, row in balanced_df.iterrows():
+#         label_word = str(label[row['citation_class_label']])
+#         cited_author = row['cited_author']
+#         citation_text = re.sub(r"#AUTHOR_TAG", cited_author, row['citation_context'])
+#         # citation_text = re.sub(r'[\[0-9\]]', '', citation_text).lower()
+#         # citation_text = re.sub(r' \(.*?\)', '', citation_text)
+#         citation_text = re.sub(r'[^a-zA-Z]', ' ', citation_text).lower()
+#         # citation_text = re.sub(r'[0-9]|[\[0-9\]]', '', citation_text).lower()
+#         citation_text = nltk.word_tokenize(citation_text)
+#         citation_text = [word for word in citation_text if (word not in stop_words and len(word) > 1)]
+#         # test_data.loc[index] = {"unique_id": row['unique_id'],
+#         #                         'core_id': row['core_id'],
+#         #                         'citing_title': row['citing_title'],
+#         #                         'citing_author': row['citing_author'],
+#         #                         'cited_title': row['cited_title'],
+#         #                         'cited_author': row['cited_author'],
+#         #                         'citation_context': citation_text,
+#         #                         'citation_class_label': row['citation_class_label']}
+#         # test_length_list.append(len(citation_text))
+#         # if len(citation_text) > 50:
+#         #     citation_text = citation_text[:50]
+#         # if len(citation_text) < 5:
+#         #     test_data.loc[index] = {'citation_context': np.nan,
+#         #                             'citation_class_label': row['citation_class_label']}
+#         #     continue
+#         balanced_data.loc[index] = {'citation_context': citation_text,
+#                                     'citation_class_label': row['citation_class_label']}
+#     # display sentences length and num
+#     # print('test_length', collections.Counter(test_length_list))
+#     # citation_counter = collections.Counter(test_length_list)
+#     # length_list = sorted(list(citation_counter.keys()))
+#     # num_list = []
+#     # for i in length_list:
+#     #     num_list.append(citation_counter[i])
+#     # length_list = [str(length) for length in length_list]
+#     # plt.figure(figsize=(30, 6), dpi=100)
+#     # mpl.rcParams['font.family'] = 'SimHei'
+#     # # length_sort = [str(length) for length in length_sort]
+#     # plt.bar(length_list, num_list, width=0.5, color='red')
+#     # plt.grid(alpha=0.3, linestyle=':')
+#     # plt.xlabel('test sentences length')
+#     # plt.ylabel('test sentences num')
+#     # plt.show()
+#     balanced_data = balanced_data.dropna(axis=0, how='any').reset_index(drop=True)
+#     return balanced_data
+#
+#
+# def load_unlabeled_data():
+#     print('Loading Unlabeled data')
+#     unlabeled_path = data_path / 'aclgenerate.csv'
+#     data = pd.read_csv(unlabeled_path, sep=',')
+#     # print(data.head(3000))
+#     used_data = data.head(3000)
+#     unlabeled_data = pd.DataFrame(columns=['citation_context', 'citation_class_label'])
+#     for index, row in used_data.iterrows():
+#         citation_context = re.sub(r'[^a-zA-Z]', ' ', row['citation_context']).lower()
+#         citation_text = nltk.word_tokenize(citation_context)
+#         citation_text = [word for word in citation_text if (word not in stop_words and len(word) > 1)]
+#         unlabeled_data.loc[index] = {'citation_context': citation_text, 'citation_class_label': 0}
+#     # print(unlabeled_data)
+#     return unlabeled_data
 
 def count_all_words(data):
     words = []
@@ -302,7 +256,7 @@ def count_all_words(data):
     return words
 
 
-def load_word_vector(train_data, val_data, test_data, used_unlabeled_data=None):
+def load_word_vector(train_data, val_data, test_data):
     """
     :param train_data:
     :param val_data:
@@ -314,8 +268,8 @@ def load_word_vector(train_data, val_data, test_data, used_unlabeled_data=None):
     label_dataframe = pd.Series(label)
     # Download word vector
     print('Loading word vectors')
-    path = os.path.join('/home/g19tka13/wordvector', 'glove.6B.zip')
-    unzip_path = Path('/home/g19tka13/wordvector')
+    path = os.path.join('../dataset/wordvector', 'glove.6B.zip')
+    unzip_path = Path('../dataset/wordvector')
     if not os.path.exists(path):
         print('Download word vectors')
         import urllib.request
@@ -323,7 +277,7 @@ def load_word_vector(train_data, val_data, test_data, used_unlabeled_data=None):
                                    path)
         with zipfile.ZipFile(path, 'r') as zipf:
             zipf.extractall(unzip_path)
-    vectors_glove = Vectors('glove.6B.300d.txt', cache='/home/g19tka13/wordvector')
+    vectors_glove = Vectors('glove.6B.300d.txt', cache='../dataset/wordvector')
     # vectors_fasttext = Vectors('wiki.en.vec', cache='/home/g19tka13/wordvector')
 
     vocab_glove = Vocab(collections.Counter(count_all_words(train_data['citation_context'].append
@@ -331,12 +285,6 @@ def load_word_vector(train_data, val_data, test_data, used_unlabeled_data=None):
                                                       (test_data['citation_context'], ignore_index=True).append
                                                       (label_dataframe, ignore_index=True))),
                         specials=['<pad>', '<unk>'], vectors=vectors_glove)
-    # vocab_fasttext = Vocab(collections.Counter(count_all_words(train_data['citation_context'].append
-    #                                                         (val_data['citation_context'], ignore_index=True).append
-    #                                                         (test_data['citation_context'],
-    #                                                          ignore_index=True).append
-    #                                                         (label_dataframe, ignore_index=True))),
-    #                        specials=['<pad>', '<unk>'], vectors=vectors_fasttext)
     return vocab_glove
 
 
@@ -406,7 +354,6 @@ def generate_dataset(vocabulary, data_text=None, data_label=None, ner_class = No
     :param data_label:
     :return:
     """
-    # if data_type == 'train_me':
     text_data = data_text
     train_text_num = len(text_data)
     text_len = np.array([len(sentence) for sentence in text_data])
@@ -414,24 +361,9 @@ def generate_dataset(vocabulary, data_text=None, data_label=None, ner_class = No
     # word_to_index
     word_to_id = vocabulary.stoi['<pad>'] * np.ones([train_text_num, max_text_len], dtype=np.int64)
     for i in range(len(text_data)):
-        # if len(kwargs) != 0:
-        #     print(len((text_data[i])))
-        # for word in text_data[i]:
-        #     print(word)
         word_to_id[i, :len(text_data[i])] = [vocabulary.stoi[word] if word in vocabulary.stoi else
                                              vocabulary.stoi['<unk>'] for word in text_data[i]]
-    # iter = (word_id, sentence_len, class_id)
-    # if len(kwargs) != 0:
-    #     dataset = Data.TensorDataset(torch.from_numpy(word_to_id), torch.from_numpy(text_len),
-    #                                  torch.from_numpy(kwargs['index']))
-    # else:
     label_data = data_label.values.astype(np.int64)
-        # dataset = Data.TensorDataset(torch.from_numpy(word_to_id), torch.from_numpy(text_len),
-        #                              torch.from_numpy(label_data))
-        # if ner_class is not None:
-        #     dataset = Data.TensorDataset(torch.from_numpy(word_to_id), torch.from_numpy(text_len),
-        #                                  torch.from_numpy(label_data), ner_class)
-        # else:
     dataset = Data.TensorDataset(torch.from_numpy(word_to_id), torch.from_numpy(text_len),
                                  torch.from_numpy(label_data))
     return dataset
