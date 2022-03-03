@@ -15,6 +15,7 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from nltk.corpus import stopwords
+import jsonlines
 
 
 stop_words = stopwords.words('english')
@@ -33,16 +34,25 @@ def acljson2pd(name):
         with open('./dataset/acl/{}.jsonl'.format(setname), 'r+', encoding='utf8') as f:
             for line in jsonlines.Reader(f):
                 if 'citation_context' not in data:
-                    data['citation_context'] = [line['text']]
+                    citation_text = nltk.word_tokenize(line['text'])
+                    text = [word for word in citation_text if (word not in stop_words and len(word) > 1)]
+                    # text = line['text'].split()
+                    # data['citation_context'] = [line['text'].split()]
+                    data['citation_context'] = [text]
+
                     data['citation_class_label'] = [label_dict[line['intent']]]
                 else:
                     context_list = data['citation_context']
-                    context_list.append(line['text'])
+                    citation_text = nltk.word_tokenize(line['text'])
+                    text = [word for word in citation_text if (word not in stop_words and len(word) > 1)]
+                    # text = line['text'].split()
+                    context_list.append(text)
                     label_list = data['citation_class_label']
                     label_list.append(label_dict[line['intent']])
                     data['citation_context'] = context_list
                     data['citation_class_label'] = label_list
         data_df = pd.DataFrame(data)
+        print(data_df)
         datadic[setname] = data_df
     return datadic
 

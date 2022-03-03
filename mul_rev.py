@@ -34,7 +34,7 @@ def main_rev(path, dev):
     token = AutoTokenizer.from_pretrained('allenai/scibert_scivocab_uncased')
     model = BertRev('allenai/scibert_scivocab_uncased')
     criterion = nn.CrossEntropyLoss()
-    lr = 0.0001
+    lr = 0.0005
     n_epoch = 140
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=2e-4)
     scheduler = WarmupMultiStepLR(optimizer, [90, 110], gamma=0.01, warmup_epochs=5)
@@ -115,8 +115,8 @@ if __name__ == '__main__':
     device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
     args = parser.parse_args()
     # if args.cla == 'mul':
-    main_mul('mul_model.pth', device)
+    # main_mul('mul_model.pth', device)  # 0.6973
     # elif args.cla == 'rev':
-    main_rev('rev_model.pth', device)
+    main_rev('rev_model.pth', device) # 0.6748
     # else:
-    main_sci('scibert_model.pth', device)
+    # main_sci('scibert_model.pth', device) # 0.6969

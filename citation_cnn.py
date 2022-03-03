@@ -24,7 +24,7 @@ def main():
     batch_size = 64
     hidden_size = 200
     lr = 0.0001
-    n_epoch = 200
+    n_epoch = 80
     best_val_f1 = 0
     s_train, s_val, s_test  = load_train_val()
     # s_test = load_test_data()
