@@ -34,11 +34,11 @@ def main_rev(path, dev):
     token = AutoTokenizer.from_pretrained('allenai/scibert_scivocab_uncased')
     model = BertRev('allenai/scibert_scivocab_uncased')
     criterion = nn.CrossEntropyLoss()
-    lr = 0.0007
+    lr = 0.0005
     n_epoch = 150
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=2e-4)
     scheduler = WarmupMultiStepLR(optimizer, [90, 110], gamma=0.01, warmup_epochs=5)
-    data = load_data(batch_size=16, dataname='ACL', radio=0.8)
+    data = load_data(batch_size=8, dataname='ACL', radio=0.8)
     best_model_f1 = rev_train(model, token, data, criterion, optimizer, n_epoch, dev, model_path=path,
                               scheduler=scheduler)
     test_f1, test_micro_f1, test_true_label, test_pre_label = dataset_valid(model, token,
