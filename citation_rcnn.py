@@ -24,8 +24,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
 def main():
     batch_size = 64
     hidden_size = 200
-    lr = 0.0001
-    n_epoch = 200
+    lr = 0.001
+    n_epoch = 50
     best_val_f1 = 0
     s_train, s_val, s_test = load_train_val()
 
