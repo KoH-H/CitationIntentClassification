@@ -1,5 +1,5 @@
 import pandas as pd
-# import sklearn
+import sklearn
 import random
 from utils.util import *
 import nltk
