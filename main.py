@@ -93,6 +93,11 @@ def main_run(params, path, dev):
 if __name__ == "__main__":
     args = parser.parse_args()
     tst = time.time()
+    modelpath = "citation_mul_rev_model.pth"
+    if args.dataname == "ACT":
+        modelpath = "bbnACT"
+    elif args.dataname == "ACL":
+        modelpath = "bbn for acl"
     if args.mode =='optuna':
         run_optuna(args, 'citation_mul_rev_model.pth', device)
     else:
@@ -100,6 +105,6 @@ if __name__ == "__main__":
             config = json.load(f)
         args.lr = config[args.dataname][args.tp]['lr']
         args.auw = config[args.dataname][args.tp]['auw']
-        main_run(args, 'citation_mul_rev_model.pth', device)
+        main_run(args, 'modelpath', device)
     ten = time.time()
     print('Total time: {}'.format((ten - tst)))
