@@ -166,6 +166,8 @@ def load_data(batch_size=None, dataname=None, radio=0.2):
             pd.read_csv(path / 'dataset/act/sample_submission.csv'), on='unique_id')
         train_set = sklearn.utils.shuffle(train_set, random_state=0).reset_index(drop=True)
         train = train_set.loc[:int(train_set.shape[0] * radio) - 1]
+        train.to_csv('traindata.csv', sep=',', index=False, encoding='utf-8')
+        exit()
         print(train['citation_class_label'].value_counts())
         print(collections.Counter(train['citation_class_label']).items())
         val = (train_set.loc[int(train_set.shape[0] * radio):]).reset_index(drop=True)
